@@ -1,0 +1,10 @@
+Package: genmat
+Type: Package
+Title: tools to create and analyze GENmic data organized in Matrices
+Version: 0.1
+Date: 2015-09-27
+Author: Daniel Vera vera@genomics.fsu.edu
+Maintainer: Daniel Vera <vera@genomics.fsu.edu>
+Description: A suite of tools to organize, process, analyze, and visualize genomic data in matrices.
+Depends: gplots, parallel, tools, gtools
+License: MIT Lisence
