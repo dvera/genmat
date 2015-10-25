@@ -22,9 +22,9 @@ function (mat1 , mat2 , scoremats , mat1name = "x" , mat2name = "y" , LOG10=TRUE
 	colnames(etab)<-c("gene",mat1name,mat1name)
 
 	# save table of groupings
-	write.tsv(etab,file=paste0(mat1name,"Vs",mat2name,".tsv"),colnames=T)
+	#write.tsv(etab,file=paste0(mat1name,"Vs",mat2name,".tsv"),colnames=T)
 
-	pdf(file=paste0(mat1name,"Vs",mat2name,".pdf"))
+	#pdf(file=paste0(mat1name,"Vs",mat2name,".pdf"))
 
 	# read score matrices
 	sm2<-lapply(scoremats,read.mat)
@@ -63,8 +63,8 @@ function (mat1 , mat2 , scoremats , mat1name = "x" , mat2name = "y" , LOG10=TRUE
 	}
 
 	# plot scatterplot of mat1 vs mat2
-	plot(ls,lr,pch=16,xlab=xlabel,ylab=ylabel)
-	abline(v=lsq[2:(tiles)],h=lrq[2:(tiles)],col="grey50")
+	#plot(ls,lr,pch=16,xlab=xlabel,ylab=ylabel)
+	#abline(v=lsq[2:(tiles)],h=lrq[2:(tiles)],col="grey50")
 
 	# count number of columns in scoremats
 	matcols<-ncol(sm2[[1]])
@@ -91,7 +91,7 @@ function (mat1 , mat2 , scoremats , mat1name = "x" , mat2name = "y" , LOG10=TRUE
 	par(oma=c(5,5,5,5),mar=c(0.2,0.2,0.2,0.2))
 
 	for(i in 1:(tiles^2)){
-		cat(i,"\n")
+		#cat(i,"\n")
 		plot(0,type="n",xlim=c(0,matcols),ylim=ylims,yaxt='n',xaxt='n')
 		if(i %in% lefts ){
 			axis(2,at=ya,labels=ya)
@@ -103,7 +103,7 @@ function (mat1 , mat2 , scoremats , mat1name = "x" , mat2name = "y" , LOG10=TRUE
 		}
 		abline(v=abx,h=aby,col="grey70")
 		for(j in 1:numscoremats){
-			cat("j=",j,"\n")
+			#cat("j=",j,"\n")
 			lines(1:matcols,colMeans(sm2[[j]][which(cs==eg[i,1] & cr==eg[i,2]),],na.rm=T),col=plotcolors[j])
 		}
 		text(xa[1],ya[3],paste0("n=",length(which(cs==eg[i,1] & cr==eg[i,2]))),pos=4)
@@ -197,6 +197,6 @@ function (mat1 , mat2 , scoremats , mat1name = "x" , mat2name = "y" , LOG10=TRUE
 
 
 
-	dev.off()
+	#dev.off()
 
 }
