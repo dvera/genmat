@@ -9,6 +9,7 @@ function(
 	threads=getOption("threads",1L),
 	plottype="l",
 	linewidth=2,
+	drawlegend=TRUE,
 	...
 ){
 
@@ -57,6 +58,6 @@ function(
 		)
   }
 
-	legend("topleft",legend=legendnames, col=plotcolors, lwd=linewidth, cex=0.75)
+	if(drawlegend){legend("topleft",legend=legendnames, col=plotcolors, lwd=linewidth, cex=0.75)}
 
 }
