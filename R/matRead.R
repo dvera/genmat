@@ -5,7 +5,7 @@ function( mat, fmat=FALSE , ... ){
     rownames(m) <- m[,1]
     m <- data.matrix(m[,-1])
   } else{
-    as.matrix(read.table(mat,stringsAsFactors=FALSE,sep="\t",row.names=1, ... )
+    as.matrix(read.table(mat,stringsAsFactors=FALSE,sep="\t",row.names=1, ... ))
   }
 
 }
