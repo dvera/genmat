@@ -1,9 +1,12 @@
 exportPattern("^[[:alpha:]]+")
 
+
+import(conifur)
 import(rubber)
 import(gtools)
 import(parallel)
 import(tools)
 import(gplots)
 import(readr)
+import(gyro)
 export(mclapply)
