@@ -424,7 +424,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 
 
 
-			fragmat<-read.fmat(fragmats[v])
+			fragmat<-matRead(fragmats[v])
 
 			fmatcols<-ncol(fragmat)
 			fmatrows<-nrow(fragmat)

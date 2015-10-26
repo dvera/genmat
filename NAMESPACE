@@ -1,5 +1,6 @@
 exportPattern("^[[:alpha:]]+")
 
+import(rubber)
 import(gtools)
 import(parallel)
 import(tools)

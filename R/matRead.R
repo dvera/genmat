@@ -1,11 +1,11 @@
-matRead <-
-function( mat, fmat=FALSE , ... ){
-	if(!fmat){
-    m <- read_tsv(mat,col_names=FALSE, ... )
-    rownames(m) <- m[,1]
-    m <- data.matrix(m[,-1])
-  } else{
-    as.matrix(read.table(mat,stringsAsFactors=FALSE,sep="\t",row.names=1, ... ))
-  }
+matRead <- function( mat, fmat=FALSE , threads=getOption("threads",1L), ... ){
+	#if(!fmat){
+    m <- mclapply(mat,read.tsv, row.names=1 , mc.cores=threads, mc.preschedule=FALSE,  ... )
+		m <- lapply(m, as.matrix)
+		if(length(m)==1){m<-m[[1]]}
+    return(m)
+  # } else{
+  #   as.matrix(read.table(mat,stringsAsFactors=FALSE,sep="\t",row.names=1, ... ))
+  # }
 
 }
