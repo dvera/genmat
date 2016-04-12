@@ -14,14 +14,14 @@ function( mats, normalizeto=NULL, cores ="max" ){
   outnames <- paste0( matnames, "_iqrnorm.", exts )
 
   # read matrices
-  matlist<-mclapply(mats,read.mat,mc.cores=cores)
+  matlist<-mclapply(mats,matRead,mc.cores=cores)
 
   # calculate IQRs
   iqrs <- unlist(mclapply(matlist,IQR,na.rm=T, mc.cores=cores))
 
   # set target IQR
   if(is.null(normalizeto)){
-    iqr <- mean(unlist(mclapply(matlist,IQR,na.rm=T)))
+    iqr <- mean(iqrs)
   } else{
     iqr <- IQR( matlist[normalizeto], na.rm=T )
   }
@@ -32,7 +32,7 @@ function( mats, normalizeto=NULL, cores ="max" ){
   # normalize matrices
   matlist<-mclapply( 1:nummats,function(x) {
       nmat <- matlist[[x]] * scalars[x]
-      write.mat(nmat,file=outnames[x])
+      matWrite(nmat,file=outnames[x])
   }, mc.cores=cores )
 
   # retrn output file names

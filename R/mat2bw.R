@@ -1,14 +1,14 @@
 mat2bg <- function( matfiles , binsize , maxbins , prefix , chromnames = remove.prefix( matfiles , "\\.") , cores="max"){
 
-  options(scipen=9999999)
+  options(scipen=99999)
   if(cores=="max"){ cores <- detectCores()-1 }
 
   bins <- mclapply(1:length(matfiles), function(i){
 
-    mat <- data.matrix(read.tsv(matfiles[i]))
+    mat <- data.matrix(read_tsv(matfiles[i],col_names=FALSE))
 
     if(ncol(mat) != nrow(mat)){
-      cat("WARNING: MATRIX",matfiles[i],"DOES NOT HAVE EQUAL DIMENSIONS, TRIMMING\n")
+      cat("WARNING: MATRIX",matfiles[i],"IS NOT SQUARE, TRIMMING\n")
       mindim <- min(dim(mat))
       mat <- mat[ 1:mindim , 1:mindim ]
     }
@@ -36,9 +36,16 @@ mat2bg <- function( matfiles , binsize , maxbins , prefix , chromnames = remove.
         (1:bincount)*binsize ,
         y[,w]
       )
-      bg[seq(2,bincount,2),2:3] <- bg[seq(2,bincount,2),2:3] - (binsize/2)
+      #bg[seq(2,bincount,2),2:3] <- bg[seq(2,bincount,2),2:3] - (binsize/2)
+      if(w %in% seq(2,maxbins,2)){
+        bg[,2:3] <- bg[,2:3] + (binsize/2)
+      }
+
+
+
       bg <- bg[complete.cases(bg),]
       colnames(bg) <- paste0("V",1:4)
+      bg
     })
 
     return(bgs)
@@ -46,11 +53,15 @@ mat2bg <- function( matfiles , binsize , maxbins , prefix , chromnames = remove.
   }, mc.cores=cores, mc.preschedule=FALSE)
 
   distwidth <- nchar(maxbins * binsize)
+
   dump<-mclapply(1:maxbins, function(w){
     bg<-do.call(rbind,lapply(bins,"[[",w))
     bg<-bg[order(bg[,1],bg[,2]),]
     outname<-paste0(prefix,"_d",sprintf(paste0("%0",distwidth,"d"), binsize*(w-1)),".bg")
     write.tsv(bg,file=outname)
+    outname
   }, mc.cores=cores, mc.preschedule=FALSE)
+
+  return(unlist(dump))
 
 }

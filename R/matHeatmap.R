@@ -1,10 +1,10 @@
 matHeatmap <-
-function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list = NULL , flip = FALSE , flip.range = c("-50,0","0,50") , flip.method = "max" , align.range = c(-200,0) , align.method = "max" , align = FALSE , sort.ranges = NA , sort.breaks = NA , numgroups=3 , crossmat=NULL , matcolors=NULL , groupcolors=NULL , heatmap.lims="5%,95%" , heatmap.colors="black,white" , agg.lims= NA , fragmats=NULL , fragmatnames=NULL , fragrange=c(0,200) , vplot.colors="black,blue,yellow,red" , vplot.lims="0,95%" , forcescore=TRUE , cores="max" ){
+function( mats , matnames=NULL , sorton=1 , sort.methods="none" , gene.list = NULL , flip = FALSE , flip.range = c("-50,0","0,50") , flip.method = "max" , align.range = c(-200,0) , align.method = "max" , align = FALSE , sort.ranges = NA , sort.breaks = NA , numgroups=3 , crossmat=NULL , matcolors=NULL , groupcolors=NULL , heatmap.lims="5%,95%" , heatmap.colors="black,white" , agg.lims= NA , fragmats=NULL , fragmatnames=NULL , fragrange=c(0,200) , vplot.colors="black,blue,yellow,red" , vplot.lims="0,95%" , forcescore=TRUE , threads=getOption("threads",1L) ){
 
 
 	# TO DO
 	# ##############
-	# change cores="max" with requestCores()
+	# change threads="max" with requestthreads()
 
 	# check sorting for expected sorting methods or existing file
 	# check that mats is a character vector and all files exist
@@ -13,22 +13,17 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 	# make sure align range is within matrix boundaries
 
 
-	library(gtools)
-	library(tools)
-	library(parallel)
-
 	pwd<-getwd()
 
-	if(cores=="max"){cores=detectCores()-1}
-
-
-	if(is.null(mats) & is.null(fragmats)){stop("nothing to plot")}
+	if(missing(mats) & missing(fragmats)){
+		stop("nothing to plot")
+	}
 
 	# check if provided sort methods are valid
 	valid.sort.methods=c("file","none","kmeans","chrom","max","min","mean","median","sd","maxloc","minloc","pregrouped")
 	if(sum(sort.methods %in% valid.sort.methods) != length(sort.methods)){stop("unrecognized sort.methods. valid methods include none,kmeans,chrom,max,min,mean,median,sd,maxloc,minloc")}
 
-	if(is.null(mats) == FALSE){
+	if(!missing(mats)){
 
 		nummats<-length(mats)
 
@@ -102,7 +97,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 
 
 		# read matrix for sorting and get dimensions
-		sortmat<-read.mat(mats[sorton])
+		sortmat<-matRead(mats[sorton])
 		matcols<-ncol(sortmat)
 		matrows<-nrow(sortmat)
 
@@ -146,7 +141,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 
 		#if(normalize==TRUE){
 		#	cat("normalizing sort matrix\n")
-		#	sortmat<-t(simplify2array(mclapply(1:matrows[r],function(x) sortmat[x,]/mean(sortmat[x,],na.rm=TRUE),mc.cores=cores)))*mean(sortmat,na.rm=TRUE)
+		#	sortmat<-t(simplify2array(mclapply(1:matrows[r],function(x) sortmat[x,]/mean(sortmat[x,],na.rm=TRUE),mc.threads=threads)))*mean(sortmat,na.rm=TRUE)
 		#	row.names(sortmat)<-matlist[[r]]
 		#}
 
@@ -361,7 +356,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 	#}
 
 
-	if(is.null(mats)==FALSE){
+	if(!missing(mats)){
 		cat("setting groups and colors\n")
 		# ##### get order of preloaded sort table
 
@@ -508,7 +503,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 
 			dev.off()
 
-			if(is.null(mats)==FALSE){
+			if(!missing(mats)){
 
 				fragmat<-fragmat[order(heatmap.order),]
 
@@ -570,7 +565,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 	for(l in 1:nummats){
 		cat("starting mats\n")
 		# load matrix and get dimensions
-		curmat<-read.mat(mats[l])
+		curmat<-matRead(mats[l])
 		curmat[is.infinite(curmat)]<-NA
 
 		matcols<-ncol(curmat)
@@ -620,7 +615,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 		groupmeanmaxs<-unlist(lapply(groupmeans,max,na.rm=TRUE))
 		groupmeanmins<-unlist(lapply(groupmeans,min,na.rm=TRUE))
 
-		if(is.na(agg.lims) | is.null(agg.lims)){
+		if(is.na(agg.lims[l]) | is.null(agg.lims[l])){
 			agg.min<-min(groupmeanmins)
 			agg.max<-max(groupmeanmaxs)
 		} else{
@@ -655,7 +650,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 		# create layout matrix
 		m<-matrix(1:3,nrow=3)
 
-		# set out-of-boundary scores to boundaries
+		# set out-of-boundary sthreads to boundaries
 		mat[which(mat>curmax)]<-curmax
 		mat[which(mat<curmin)]<-curmin
 
@@ -716,7 +711,7 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 
 
 	}
-	#},mc.cores=cores)
+	#},mc.threads=threads)
 
 	# make montage
 	#if(nummats < 10){
@@ -730,14 +725,14 @@ function( mats=NULL , matnames=NULL , sorton=1 , sort.methods="none" , gene.list
 	# 	pdf(file=paste(pwd,"/",dname,"/","group-averages",".pdf",sep=""))
 	# 	for(i in 1:(numgroups[1])){
 	# 		cat("i=",i,"\n")
-	# 		groupscores=lapply(lapply(grouplist,"[",i),unlist)
-	# 		allscores=unlist(groupscores)
-	# 		print(allscores)
-	# 		#plot(0,type="n",xlim=c(min(x),max(x)),ylim=c(min(allscores),max(allscores)),xlab="Distance from TSS",ylab="Average Score",main=paste("Group",i))
+	# 		groupsthreads=lapply(lapply(grouplist,"[",i),unlist)
+	# 		allsthreads=unlist(groupsthreads)
+	# 		print(allsthreads)
+	# 		#plot(0,type="n",xlim=c(min(x),max(x)),ylim=c(min(allsthreads),max(allsthreads)),xlab="Distance from TSS",ylab="Average Score",main=paste("Group",i))
 	# 		plot(0,type="n",xlim=c(min(x),max(x)),ylim=c(1,2.5),xlab="Distance from TSS",ylab="Average Score",main=paste("Group",i))
 	# 		for(j in 1:length(crossmat)){
 	# 			cat("j=",j,"\n")
-	# 			lines(x,groupscores[[j]],lwd=3,col=matcolors[j])
+	# 			lines(x,groupsthreads[[j]],lwd=3,col=matcolors[j])
 	# 		}
 
 	# 	}

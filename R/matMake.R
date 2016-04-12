@@ -49,7 +49,8 @@ matMake <- function(
   suffix=NULL,
   scoremat=TRUE,
   fragmats=FALSE,
-  fragmatcenters=TRUE
+  fragmatcenters=TRUE,
+  useBedScores=FALSE
 ){
 
         # TO DO
@@ -280,7 +281,7 @@ matMake <- function(
 			#PRUNE READS/SCORES TO REGIONS AROUND FEATURES
 			if(prunescores){
 				if(getOption("verbose")){  cat(scorename,": pruning scores to regions of interest\n") }
-				scorefile<-bed.intersect(scorefile,featfile)
+				scorefile<-bedtoolsIntersect(scorefile,featfile)
 				if(getOption("verbose")){  cat(scorename,": counting pruned scores\n") }
 				prunedscorecount<-filelines(scorefile)
 				if(getOption("verbose")){  cat(scorename,":",prunedscorecount,"scores after pruning\n") }
@@ -296,7 +297,7 @@ matMake <- function(
         #get coverage/average
         if(scoretype=="bam"){
 					if(getOption("verbose")){  cat(scorename,": finding coverage of",scorename,"on",featname,"\n") }
-          curmat.call <- pipe(paste("bedtools coverage -a",scorefile,"-b",covbedname," | sort -k4,4n | cut -f 5"),open="r")
+          curmat.call <- pipe(paste("bedtools coverage -b",scorefile,"-a",covbedname," | sort -k4,4n | cut -f 5"),open="r")
 					curmat<-t(matrix(as.numeric(readLines(curmat.call)),nrow=numwindows))
           close(curmat.call)
 				}
@@ -360,7 +361,7 @@ matMake <- function(
         if(fragmatcenters){
           cfbg<-bedCenters(scorefile,sizeScore=TRUE)
         } else{
-
+          cfbg<-gsub(".bed","_centers.bg",scorefile)
         }
 
         if(getOption("verbose")){ cat(scorename,": creating fragmat\n") }

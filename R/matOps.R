@@ -30,7 +30,7 @@ function( matlist1 , matlist2=NULL , operation="difference" , outnames = NULL , 
 		if(operation=="antilog2"){ mat<-2^(mat) }
 		if(operation=="antilog10"){ mat<-2^(mat) }
 		if(operation=="inverse"){ mat<-1/(mat) }
-		write.mat(mat,file=outnames)
+		matWrite(mat,file=outnames)
 	}
 
 
@@ -42,7 +42,7 @@ function( matlist1 , matlist2=NULL , operation="difference" , outnames = NULL , 
 		mats<-lapply(matlist1,read.mat)
 		if(length(unique(lapply(lapply(lapply(mats,dim),as.character),paste,collapse="-"))) != 1 ){stop("dimensions of matrices are not equal")}
 		outmat<-Reduce('+',mats)/length(mats)
-		write.mat(outmat,file=outnames)
+		matWrite(outmat,file=outnames)
 	}
 
 	if( is.null(matlist1)==FALSE & length(matlist2) == length(matlist1) ){
@@ -70,7 +70,7 @@ function( matlist1 , matlist2=NULL , operation="difference" , outnames = NULL , 
 			if(operation=="ratio"){mat3<-(mats1[[x]]/mats2[[x]])}
 			if(operation=="difference"){mat3<-(mats1[[x]]-mats2[[x]])}
 			if(operation=="mean"){mat3<-((mats1[[x]]+mats2[[x]])/2)}
-			write.mat(mat3,file=outnames[x])
+			matWrite(mat3,file=outnames[x])
 		})
 
 	}
