@@ -4,60 +4,88 @@ function(
 	xlabel="Distance from feature (bp)",
 	ylabel="Mean score",
 	ylims=c("auto","auto"),
-	plotcolors=rainbow(length(matrixlist)),
-	legendnames=basename(removeext(matrixlist)),
+	plotcolors=NULL,
+	legendnames=NULL,
 	threads=getOption("threads",1L),
 	plottype="l",
 	linewidth=2,
 	drawlegend=TRUE,
+	mainlabels=NULL,
+	legendpos="topleft",
 	...
 ){
 
-	# count matrices
-	nummats<-length(matrixlist)
+	if(!is.list(matrixlist)){matrixlist <- list(matrixlist) }
 
-	# read in matrices
-	matlist<-matRead(matrixlist,unlistSingle=FALSE)
-	matcols<-unlist(lapply(matlist,ncol))
+	if(is.null(mainlabels)){
+		if(!is.null(names(matrixlist))){
+			mainlabels=names(matrixlist)
+		} else{
+			mainlabels=rep("",length(matrixlist))
+		}
+	}
 
-	# get column averages for each matrix
-	mataverages<-lapply(matlist,colMeans,na.rm=TRUE)
+	if(is.null(plotcolors)){
+		plotcolors=lapply(1:length(matrixlist),function(m){ rainbow(length(matrixlist[[m]]))})
+	} else if(!is.list(plotcolors)){
+		plotcolors=list(plotcolors)
+	}
 
-	# find min and max across all matrices
-	ymax<-max(unlist(mataverages),na.rm=TRUE)
-	ymin<-min(unlist(mataverages),na.rm=TRUE)
+	if(is.null(legendnames)){
+		legendnames=lapply(1:length(matrixlist),function(m){ basename(removeext(matrixlist[[m]])) })
+	} else if(!is.list(legendnames)){
+		plotcolors=list(plotcolors)
+	}
 
-	# set default y lims
-	if(ylims[1]=="auto"){ylims[1]=ymin}
-	if(ylims[2]=="auto"){ylims[2]=ymax}
-	ylims<-as.numeric(ylims)
+	for(m in 1:length(matrixlist)){
 
-	# find bp size of matrix
-	windowsizes<-as.numeric(gsub("mat","",file_ext(matrixlist)))
-	xs<-lapply(1:nummats,function(x) ((1:matcols[x])-(matcols[x]/2))*windowsizes[x])
+		# count matrices
+		nummats<-length(matrixlist[[m]])
 
-	# plot window
-	plot(
-    0,
-		type="n",
-    xlim=c(min(xs[[1]]),max(xs[[1]])),
-		ylim=ylims,
-    xlab=xlabel,
-    ylab=ylabel,
-    ...
-  )
+		# read in matrices
+		matlist<-matRead(matrixlist[[m]],unlistSingle=FALSE)
+		matcols<-unlist(lapply(matlist,ncol))
 
-	#plot averages
-	for(k in 1:nummats){
-		lines(
-		  xs[[k]],
-		  mataverages[[k]],
-      col=plotcolors[k],
-      lwd=linewidth,
-      type=plottype
-		)
-  }
+		# get column averages for each matrix
+		mataverages<-lapply(matlist,colMeans,na.rm=TRUE)
 
-	if(drawlegend){legend("topleft",legend=legendnames, col=plotcolors, lwd=linewidth, cex=0.75)}
+		# find min and max across all matrices
+		ymax<-max(unlist(mataverages),na.rm=TRUE)
+		ymin<-min(unlist(mataverages),na.rm=TRUE)
 
+		# set default y lims
+		if(ylims[1]=="auto"){ylims[1]=ymin}
+		if(ylims[2]=="auto"){ylims[2]=ymax}
+		ylims<-as.numeric(ylims)
+
+		# find bp size of matrix
+		windowsizes<-as.numeric(gsub("mat","",file_ext(matrixlist[[m]])))
+		xs<-lapply(1:nummats,function(x) ((1:matcols[x])-(matcols[x]/2))*windowsizes[x])
+
+		# plot window
+		plot(
+	    0,
+			type="n",
+	    xlim=c(min(xs[[1]]),max(xs[[1]])),
+			ylim=ylims,
+	    xlab=xlabel,
+	    ylab=ylabel,
+			main=names(mainlabels[[m]]),
+	    ...
+	  )
+
+		#plot averages
+		for(k in 1:nummats){
+			lines(
+			  xs[[k]],
+			  mataverages[[k]],
+	      col=plotcolors[[m]][k],
+	      lwd=linewidth,
+	      type=plottype
+			)
+	  }
+
+		if(drawlegend){legend(legendpos,legend=legendnames[[m]], col=plotcolors[[m]], lwd=linewidth, cex=0.75)}
+
+	}
 }
