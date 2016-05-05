@@ -17,7 +17,7 @@ function(
 	nummats<-length(matrixlist)
 
 	# read in matrices
-	matlist<-matRead(matrixlist)
+	matlist<-matRead(matrixlist,unlistSingle=FALSE)
 	matcols<-unlist(lapply(matlist,ncol))
 
 	# get column averages for each matrix

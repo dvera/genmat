@@ -2,7 +2,7 @@ exportPattern("^[[:alpha:]]+")
 
 
 import(conifur)
-import(rubber)
+import(travis)
 import(gtools)
 import(parallel)
 import(tools)

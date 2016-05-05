@@ -46,8 +46,8 @@ devtools::install_github("dvera/conifur")
 # install gyro (genomic wrapper scripts in R)
 devtools::install_github("dvera/gyro")
 
-# install rubber (R Utilities for Bed and BEdgRaphs
-devtools::install_github("dvera/rubber")
+# install travis (R Utilities for Bed and BEdgRaphs
+devtools::install_github("dvera/travis")
 
 # install genmat
 devtools::install_github("dvera/genmat")
