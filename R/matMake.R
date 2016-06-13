@@ -124,7 +124,7 @@ matMake <- function(
 			} else{
 				if(getOption("verbose")){ cat("peak coordinates detected in narrowPeak file, recentering bed features\n") }
 				outname<-paste(featname,"_recentered.np",sep="")
-				system(paste("awk '{$2=$2+$10;$3=$2+1;print}' OFS='\t' ",featfile," | sort -k1,1 -k2,2n > ",outname,sep=""))
+				system(paste("awk '{$2=$2+$10;$3=$2+1;print}' OFS='\t' ",featfile," | sort -T . -k1,1 -k2,2n > ",outname,sep=""))
 				featfile<-outname
 			}
 		}
@@ -178,7 +178,7 @@ matMake <- function(
 		if(is.null(maskbed) == FALSE){
 
       if(getOption("verbose")){ cat("finding masking regions\n") }
-      maskmat.call <- pipe(paste("bedtools intersect -c -sorted -b",maskbed,"-a",covbedname," | sort -k4,4n | cut -f 5"),open="r")
+      maskmat.call <- pipe(paste("bedtools intersect -c -sorted -b",maskbed,"-a",covbedname," | sort -T . -k4,4n | cut -f 5"),open="r")
 			maskmat<-t(matrix(as.numeric(readLines(maskmat.call)),nrow=numwindows))
       close(maskmat.call)
 
@@ -297,26 +297,26 @@ matMake <- function(
         #get coverage/average
         if(scoretype=="bam"){
 					if(getOption("verbose")){  cat(scorename,": finding coverage of",scorename,"on",featname,"\n") }
-          curmat.call <- pipe(paste("bedtools coverage -b",scorefile,"-a",covbedname," | sort -k4,4n | cut -f 5"),open="r")
+          curmat.call <- pipe(paste("bedtools coverage -b",scorefile,"-a",covbedname," | sort -T . -k4,4n | cut -f 5"),open="r")
 					curmat<-t(matrix(as.numeric(readLines(curmat.call)),nrow=numwindows))
           close(curmat.call)
 				}
 				if(scoretype=="bed"){
 					if(getOption("verbose")){  cat(scorename,": finding coverage of",scorename,"on",featname,"\n") }
-          #curmat.call <- pipe(paste("bedtools coverage -b",scorefile,"-a",covbedname," | sort -k4,4n | cut -f 5"),open="r")
-          curmat.call <- pipe(paste("bedtools intersect -sorted -c -b",scorefile,"-a",covbedname," | sort -k4,4n | cut -f 5"),open="r")
+          #curmat.call <- pipe(paste("bedtools coverage -b",scorefile,"-a",covbedname," | sort -T . -k4,4n | cut -f 5"),open="r")
+          curmat.call <- pipe(paste("bedtools intersect -sorted -c -b",scorefile,"-a",covbedname," | sort -T . -k4,4n | cut -f 5"),open="r")
 					curmat<-t(matrix(as.numeric(readLines(curmat.call)),nrow=numwindows))
           close(curmat.call)
 				}
 				if(scoretype=="bedgraph"){
 					if(getOption("verbose")){  cat(scorename,": mapping scores in",scorename,"to",featname,"\n") }
-          curmat.call <- pipe(paste( "bedtools map -c 4 -o mean -null \"",bgfiller,"\" -a ",covbedname," -b ",scorefile," | sort -k4,4n | cut -f 5",sep="" ),open="r")
+          curmat.call <- pipe(paste( "bedtools map -c 4 -o mean -null \"",bgfiller,"\" -a ",covbedname," -b ",scorefile," | sort -T . -k4,4n | cut -f 5",sep="" ),open="r")
           curmat<-t(matrix(as.numeric(readLines(curmat.call)),nrow=numwindows))
           close(curmat.call)
 		    }
         if(scoretype=="bigWig"){
 					if(getOption("verbose")){  cat(scorename,": mapping scores in",scorename,"to",featname,"\n") }
-          curmat.call <- pipe(paste( "bigWigAverageOverBed",scorefile,covbedname,"/dev/stdout | sort -k1,1n | cut -f 6"),open="r")
+          curmat.call <- pipe(paste( "bigWigAverageOverBed",scorefile,covbedname,"/dev/stdout | sort -T . -k1,1n | cut -f 6"),open="r")
           curmat<-t(matrix(as.numeric(readLines(curmat.call)),nrow=numwindows))
           close(curmat.call)
 		    }
@@ -366,7 +366,7 @@ matMake <- function(
 
         if(getOption("verbose")){ cat(scorename,": creating fragmat\n") }
 
-        fmat.call <- pipe(paste("bedtools map -c 4 -o collapse -null \"NA\" -a ",covbedname," -b ",cfbg," | sort -k4,4n | cut -f 5",sep=""),open="r")
+        fmat.call <- pipe(paste("bedtools map -c 4 -o collapse -null \"NA\" -a ",covbedname," -b ",cfbg," | sort -T . -k4,4n | cut -f 5",sep=""),open="r")
 
         fmat<-readLines(fmat.call)
         close(fmat.call)
