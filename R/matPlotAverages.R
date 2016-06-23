@@ -15,7 +15,10 @@ function(
 	...
 ){
 
-	if(!is.list(matrixlist)){matrixlist <- list(matrixlist) }
+	if(!is.list(matrixlist)){
+		matrixlist <- list(matrixlist) 
+	        if(!is.null(mainlabels)){names(matrixlist) = mainlabels}
+	}
 
 	if(is.null(mainlabels)){
 		if(!is.null(names(matrixlist))){
@@ -34,7 +37,7 @@ function(
 	if(is.null(legendnames)){
 		legendnames=lapply(1:length(matrixlist),function(m){ basename(removeext(matrixlist[[m]])) })
 	} else if(!is.list(legendnames)){
-		plotcolors=list(plotcolors)
+		legendnames=list(legendnames)
 	}
 
 	for(m in 1:length(matrixlist)){
