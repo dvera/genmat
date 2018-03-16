@@ -15,8 +15,9 @@ function(
 	...
 ){
 
+
 	if(!is.list(matrixlist)){
-		matrixlist <- list(matrixlist) 
+		matrixlist <- list(matrixlist)
 	        if(!is.null(mainlabels)){names(matrixlist) = mainlabels}
 	}
 

@@ -15,7 +15,6 @@
 #' @param narrowpeak Boolean indicating if the matrix are aligned to summits of peaks in a narrowpeak file that is present in 'features'. Only used if summits are specified in the narrowpeak file and if 'featurecenter' is TRUE.
 #' @param maskbed A string specifying a bed file to filter values in the matrix by. If TRUE, only windows in the matrix that overlap with intervals in 'maskbed' will be assigned scores, and all other windows will contain 'NA'. Useful for preventing the FALSE assignement of zeroes in regions that have no value in 'scorefiles', such as in data from sequence-capture experiments.
 #' @param bgfiller A value to be used for windows in the matrix that have no score in bedGraph files specified in 'scorefiles'. Can be a number or NA.
-#' @param prunescores Boolean indicating if scores are intersected with the locations of windows in the matrix prior to generating the matrix. Does not affect or change the resulting matrix but does speed up the function for very large files in 'scoresfiles'.
 #' @param rpm Boolean indicating if interval densities calculated from bed files specified in 'scorefiles' are normalized to reads-per-million (RPM). If TRUE, bed interval counts in each window is multiplied by 1000000/(# of intervals in bed file). Useful if using reads with varying amounts in 'scorefiles' and a comparison of resulting matrices is desired.
 #' @param closest A string specifying a bed file to label features in the matrix. This will not affect the values in matrices but will change the names for each feature in the matrix based on the closest interval in 'closest'. Useful for assigning gene names to ChIP peaks used as 'features'.
 #' @param cores A positive integer specifying how many bams to process simultaneously.
@@ -24,6 +23,7 @@
 #' @param suffix A string that is appended to the output matrix names.
 #' @param scoremat Boolean indicating if score matrices are generated relative to features.
 #' @param fragmats Boolean indicating if a special type of matrix, a fragment-size matrix, is generated using the sizes of intervals for bed files in 'scorefiles'. Such matrices can be used to generate 'v-plots'.
+
 
 
 matMake <- function(
@@ -40,7 +40,6 @@ matMake <- function(
   narrowpeak=FALSE,
   maskbed=NULL,
   bgfiller=0,
-  prunescores=FALSE,
   rpm=TRUE,
   closest=NULL,
   threads=getOption("threads",1L),
@@ -58,18 +57,18 @@ matMake <- function(
         # add bed info to mat rownames
         # move tmp files to a tmp directory
 
+
+  ####################################
+  ### PARAMETER CHECKING/SETTING
+
   options(scipen=99999)
+  # count files
+  numscores  <- length(scorefiles)
+  numfeats   <- length(features)
+  numwindows <- regionsize/windowsize
+	scores     <- scorefiles
 
-  ####################################
-  ###    INITIALIZE                ###
-  ####################################
 
-  numscores <- length(scorefiles)
-  numfeats <- length(features)
-  numwindows<-regionsize/windowsize
-	scores<-scorefiles
-
-  # check parameters
   if(is.null(featurenames)){
   	featurenames<-basename(removeext(features))
   } else{
@@ -79,41 +78,35 @@ matMake <- function(
   if(ceiling(numwindows)!=floor(numwindows)){stop("regionsize is not a multiple of windowsize")}
 	if(ceiling(regionsize)!=floor(regionsize)){stop("regionsize must be an even number")}
 
-  # set threading
+  # set threads
 	threads2<-floor(threads/numscores)
 	if(threads2<1){threads2=1}
-	if(threads2>numfeats){threads2 <- numfeats }
-
+	if(threads2>numfeats){ threads2 <- numfeats }
 
 	#make directory for saving files
-	dnames<-paste0(featurenames,"_mat",windowsize)
+	dnames<-paste0("mat.",if(strand){"strand."},if(featurecenter){"center."},if(meta){"meta."},featurenames)
 	scorenames <- basename(removeext(scorefiles))
   snames<-lapply(1:numfeats, function(x) paste0(dnames[x],"/",scorenames,"_",featurenames[x],suffix,".mat",windowsize))
 	names(snames) <- dnames
 
   ####################################
-
-
-  ####################################
-  ###   ITERATE OVER FEATURES      ###
-  ####################################
+  ###   ITERATE OVER FEATURES
 
   mclapply(1:numfeats,function(i){
 
   	featfile<-features[i]
 		featname<-featurenames[i]
 		dname <- dnames[i]
-		system(paste("mkdir -p",dname))
 
-		if(is.null(closest) == FALSE){
+		dir.create(dname, showWarnings = FALSE, recursive = TRUE)
+
+    # annotate feature based on proximity to another set of features
+		if(!is.null(closest)){
 			featfile<-bedtoolsClosest(featfile,closest,strand=strand)
 		}
 
 		#recenter narrowpeaks
 		if(file_ext(featfile) %in% c("narrowPeak","narrowpeak","np") & featurecenter & narrowpeak){
-
-      if(getOption("verbose")){ cat("narrowPeak file detected\n") }
-
 			#check if peak location is in narrowPeak file and recenter features if OK
       headlines.call<-pipe(paste("head",featfile,"| awk '{print $10}'"),open="r")
       headlines<-as.numeric(readLines(headlines.call))
@@ -167,15 +160,15 @@ matMake <- function(
 		if(getOption("verbose")){ cat("calculating coordinates for matrix\n") }
 		if(meta){
 		      covbedname <- paste0(basename(removeext(featfile)),".covbed")
-		      covbedorder<-bedDivide(featfile,regionsize,windowsize, flank=metaflank, outname=covbedname , start=start, stop=stop, meta=TRUE )
-		      numwindows<-(metaflank*2+regionsize)/windowsize
+		      covbedorder <- bedDivide(featfile,regionsize,windowsize, flank=metaflank, outname=covbedname , start=start, stop=stop, meta=TRUE )
+		      numwindows <- (metaflank*2+regionsize)/windowsize
 		} else{
 		      covbedname <- paste0(basename(removeext(featfile)),".covbed")
 		      covbedorder <- bedDivide( featfile , regionsize , windowsize , covbedname )
 		}
 
 		#make matrix of regions to (not) mask with NAs
-		if(is.null(maskbed) == FALSE){
+		if(!is.null(maskbed)){
 
       if(getOption("verbose")){ cat("finding masking regions\n") }
       maskmat.call <- pipe(paste("bedtools intersect -c -sorted -b",maskbed,"-a",covbedname," | sort -T . -k4,4n | cut -f 5"),open="r")
@@ -189,25 +182,23 @@ matMake <- function(
 
 		}
 
-		#assign row names to matrix
+		# set names
 		if(bedcols<4){
 			geneids<-1:bedrows
 		} else{
     	  geneids<-curbed[,4]
 		}
-
+    # make gene names unique if needed
     if(length(unique(geneids)) != bedrows){
 			geneids<-paste(geneids,1:bedrows,sep="-")
 		}
-
-
+    # set strand
     if(bedcols>5){
 			strands<-curbed[,6]
 		} else{
       strands<-rep("+",bedrows)
 		}
-
-
+    # set symbol
 		if(bedcols>12){
 			symbs<-curbed[,13]
 		} else{
@@ -217,13 +208,7 @@ matMake <- function(
 		matrownames <- paste(curbed[,1],curbed[,2],curbed[,3],geneids,strands,symbs,sep=";")
 
     ####################################
-
-
-
-
-    ####################################
     ###    ITERATE OVER SCORES       ###
-    ####################################
 
     outs<-mclapply(1:length(scores), function(j) {
 
@@ -276,16 +261,6 @@ matMake <- function(
       } else{
         numfrags<-NULL
       }
-
-
-			#PRUNE READS/SCORES TO REGIONS AROUND FEATURES
-			if(prunescores){
-				if(getOption("verbose")){  cat(scorename,": pruning scores to regions of interest\n") }
-				scorefile<-bedtoolsIntersect(scorefile,featfile)
-				if(getOption("verbose")){  cat(scorename,": counting pruned scores\n") }
-				prunedscorecount<-filelines(scorefile)
-				if(getOption("verbose")){  cat(scorename,":",prunedscorecount,"scores after pruning\n") }
-			}
 
 
       ####################################
@@ -347,14 +322,8 @@ matMake <- function(
 
 			}
 
-      ####################################
-
-
-
-
 			####################################
       ###       FRAGMENT MATRICES      ###
-      ####################################
 
 			if(fragmats & scoretype == "bed"){
 

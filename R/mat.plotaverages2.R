@@ -1,5 +1,6 @@
 mat.plotaverages2 <-
 function( matfilelist,suffixes,legendnames,plotcolors=rainbow(length(matfilelist)), windowsize=10, matcols=100, xname="Distance from Feature", yname="Average Score"){
+
 	
 	# coplot as many data sets as possible
 
@@ -27,10 +28,10 @@ function( matfilelist,suffixes,legendnames,plotcolors=rainbow(length(matfilelist
 		n<-rep(0,numlists)
 		n[goodmats]<-counts
 		for(j in 1:numlists){
-			if(j %in% goodmats == TRUE){ 
+			if(j %in% goodmats == TRUE){
 				lines(xaxis,colmeans[[which(goodmats==j)]],col=plotcolors[j],lwd=3)
 			}
-			
+
 		}
 		legend("topleft",legend=paste(legendnames,n),col=plotcolors,lwd=3)
 	}
